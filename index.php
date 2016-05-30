@@ -127,8 +127,7 @@
 	function addToHand(yourHand, theDeck, number) {
 		for (var i = 0; i < number; i++) {
 			yourHand.push(theDeck[0]);
-			console.log(decodeCard(theDeck[0]));
-			//$('#player').html(decodeDeck(humanDeck));
+			//console.log(decodeCard(theDeck[0]));
 			theDeck.shift();
 		}
 		
@@ -223,21 +222,11 @@
 	
 	function updatePoker() {
 		printOutCards(player, humanDeck);
-		printOutCards(bot, botDeck);
+		//printOutCards(bot, botDeck);
 		printOutCards(stream, streamDeck);
-		botScore = botBehavior(botDeck, streamDeck);
 		
-		if (botScore >= 10) {
-			$('#botThoughts').html(":''))))");
-		} else if (botScore >= 7) {
-			$('#botThoughts').html(":)))");
-		} else if (botScore >= 5) {
-			$('#botThoughts').html(":)");
-		} else {
-			$('#botThoughts').html(":|");
-		}
-		
-		checkWinningCondition(humanDeck, streamDeck);
+		//console.log("Human: " + checkWinningCondition(humanDeck, streamDeck));
+		//console.log("Bot: " + checkWinningCondition(botDeck, streamDeck));
 	}
 	
 	//condition keys for poker
@@ -259,7 +248,9 @@
 			var equal2 = 0;
 		//if hand is equal
 		if (yourDeck[0].value == yourDeck[1].value) {
-			console.log("Pocket pairs");
+			//
+			//console.log("Pocket pairs");
+			//
 			condition = 1;
 			
 			//check if there are otheres
@@ -313,7 +304,9 @@
 			else if ((equal1 == 1) || (equal2 == 1)) {
 				condition = 1;
 			}
-			console.log("Equals: " + equal1 + " - " + equal2);
+			//
+			//console.log("Equals: " + equal1 + " - " + equal2);
+			//
 		}
 		
 		//straight
@@ -351,7 +344,9 @@
 			}
 		}		
 		
-		console.log("Straight: " + straight + " - " + five);
+		//
+		//console.log("Straight: " + straight + " - " + five);
+		//
 		
 		//flush
 		for (var i = 0; i < testDeck.length; i++) {
@@ -367,56 +362,127 @@
 			}
 		}	
 		
-		console.log("Condition : " + condition);
+		//
+		//console.log("Condition : " + condition);
+		//
+		return condition;
 	} //end of function
+	
+	//The actual game
+	var round = 0;
+	function game(round) {
+		//The first round of betting
+		if (round == -1) {
+			$('#advRound').html('<a href="javascript:;" onclick="game(0)">Start the game</a>');
+			
+		}
+		
+		if (round == 0) {
+			$('#advRound').html('<a href="javascript:;" onclick="game(1)">Advance to Flop (make sure to bet!)</a>');
+			//bet("#botBet", 0);
+			//bet("#playBet", 0);
+			
+		} 
+		
+		//The flop
+		if (round == 1) {
+			$('#advRound').html('<a href="javascript:;" onclick="game(2)">Advance to Turn (make sure to bet!)</a>');
+			addToHand(streamDeck, shuffled, 3);
+			bet("#botBet", 0);
+			bet("#playBet", 0);
+		}
+		
+		//the river
+		if (round == 2) {
+			$('#advRound').html('<a href="javascript:;" onclick="game(3)">Advance to River (make sure to bet!)</a>');
+			addToHand(streamDeck, shuffled, 1);
+			bet("#botBet", 0);
+			bet("#playBet", 0);
+		}
+		
+		//the end
+		if (round == 3) {
+			$('#advRound').html('<a href="javascript:;" onclick="game(4)">Finish round (make sure to bet!)</a>');
+			addToHand(streamDeck, shuffled, 1);
+			bet("#botBet", 0);
+			bet("#playBet", 0);
+		}
+		
+		if (round == 4) {
+			console.log("We're done here!");
+			console.log("Human: " + checkWinningCondition(humanDeck, streamDeck));
+			console.log("Bot: " + checkWinningCondition(botDeck, streamDeck));
+			bet("#botBet", 0);
+			bet("#playBet", 0);
+			
+			if (checkWinningCondition(humanDeck, streamDeck) === checkWinningCondition(botDeck, streamDeck)) {
+				console.log("TIE");
+			} else if (checkWinningCondition(humanDeck, streamDeck) > checkWinningCondition(botDeck, streamDeck)) {
+				console.log("Player wins!");
+			} else {
+				console.log("Bot wins!");
+			}
+			//Show the bot's hand
+			printOutCards(bot, botDeck);
+		}
+	}
+	
+	//This automatically updates the betting div
+	var playBet = 0;
+	var botBet = 0;
+	function bet(div, amount) {
+		if (div === "#botBet") {
+			//so betting is random - generates number from 0 to 1
+			var seed = Math.floor((Math.random() * 3));
+			
+			//The bot will check his hand and if he thinks he will win
+			//this is where the magic of bluffing and taking bot risks are:
+			var bs = (((checkWinningCondition(botDeck, streamDeck)) * 2)+seed) * 5;
+			botBet = botBet + bs;
+			$(div).html(botBet + " chips");
+		} else {
+			var amount = $('#pBet').val();
+			playBet = playBet + parseInt(amount);
+			$(div).html(playBet + " chips");
+		}
+	}
 	
 	var deck = [];
 	
 	//Poker defaults
 	var shuffled = shuffle(createDeck(deck));
 	var humanDeck = drawCards(2, shuffled);
-	//var card1 = new card("Spades", "Ace")
-	//var humanDeck = [card1, card1];
 	var botDeck = drawCards(2, shuffled);
-	var streamDeck = drawCards(5, shuffled);
+	var streamDeck = drawCards(0, shuffled);
 	
-	//Bot
-	var botScore = botBehavior(botDeck, streamDeck);
+	
 	</script>
 	
 	<style>
 		#botThoughts { font-size: 8vw; }
+		#playBet, #botBet { background-color: black; color: white; padding: 10px;}
 	</style>
 </head>
 <body>
-	
+	<span id="advRound">..</span>
 	<div id="player">
 	</div>	
+	<input type="text" id="pBet">
+	<div id="playBet">0 chips</div>
 	<hr>
-	<div id="botThoughts">...,</div>
 	<div id="bot">
 	</div>
+	<div id="botBet">0 chips</div>
 	<hr>
 	<div id="stream">
 	</div>
-	<a href="javascript:;" onclick="addToHand(streamDeck, deck, 1);">Add to your hand</a>
 	<script>
-	//$('#player').html(decodeDeck(humanDeck));
-	//$('#bot').html(decodeDeck(botDeck));
-	//$('#stream').html(decodeDeck(streamDeck));
-	if (botScore >= 10) {
-		$('#botThoughts').html(":''))))");
-	} else if (botScore >= 7) {
-		$('#botThoughts').html(":)))");
-	} else if (botScore >= 5) {
-		$('#botThoughts').html(":)");
-	} else {
-		$('#botThoughts').html(":|");
-	}
+	updatePoker();
 	checkWinningCondition(humanDeck, streamDeck);
 	printOutCards(player, humanDeck);
-	printOutCards(bot, botDeck);
+	//printOutCards(bot, botDeck);
 	printOutCards(stream, streamDeck);
+	game(-1);
 	</script>
 </body>
 </html>
